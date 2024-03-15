@@ -15,11 +15,22 @@ import {
   Button
 } from '@mui/material';
 import { VolumeUp, VolumeDown } from "@mui/icons-material";
+import OverrideListModal from './OverrideListModal';
 
 const TTSConfigurator = ({ onSave }) => {
   const formRef = useRef(null);
 
   const [voices, setVoices] = useState([]);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const [overrideList, setOverrideList] = useState([]);
+
+  const handleClose = (newList) => {
+    setOverrideList([...newList])
+    setDialogOpen(false);
+  }
+
 
   useEffect(() => {
     setVoices(speechSynthesis.getVoices());
@@ -35,16 +46,17 @@ const TTSConfigurator = ({ onSave }) => {
     for (let [key, value] of formData.entries()) {
       formValues[key] = value;
     }
+    formValues.overrideList = overrideList;
     onSave(formValues); // Pass form values up for processing
   };
 
   return (
     <Box sx={{ m: 4 }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h3" style={{ color: "#adbdcd" }} gutterBottom>
         TWITCH TTS 🔑💸
       </Typography>
 
-      <form ref={formRef} onSubmit={handleSubmit}>
+      <form id="ttsForm" ref={formRef} onSubmit={handleSubmit}>
         <Grid container spacing={2} alignItems="flex-start">
           <Grid item xs={4}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -118,7 +130,20 @@ const TTSConfigurator = ({ onSave }) => {
               Save
             </Button>
           </Grid>
+
+          <Grid item xs={4} marginTop >
+            <Button 
+              type="button"
+              variant="contained"
+              color="secondary"
+              size="large"
+              onClick={()=> setDialogOpen(true)}
+            >
+              Override
+            </Button>
+          </Grid>
         </Grid>
+        <OverrideListModal open={dialogOpen} handleClose={handleClose}/>
       </form>
     </Box>
   );

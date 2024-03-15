@@ -3,11 +3,15 @@ import parseIrcMessage from "../util/parseIrcMessage";
 
 let ws = null;
 
-const joinChatChannel = ({ channel, newSubs, resubs, followers, bitMin, ttsVoice, volume }, addMessage) => {
+const joinChatChannel = ({ channel, newSubs, resubs, followers, bitMin, ttsVoice, volume, overrideList }, addMessage) => {
 
   if (!channel) return;
   
   if (ws) ws.close();
+
+  const allowList = overrideList.filter((item) => (item.allow)).map(({ chatName }) => chatName);
+
+  const denyList = overrideList.filter((item) => (!item.allow)).map(({ chatName }) => chatName);
 
   ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
 
@@ -36,7 +40,7 @@ const joinChatChannel = ({ channel, newSubs, resubs, followers, bitMin, ttsVoice
       ttsVoice,
       volume,
       text: '',
-      username: 'system',
+      username: 'twitch',
       readTTS: false
     };
 
@@ -45,10 +49,24 @@ const joinChatChannel = ({ channel, newSubs, resubs, followers, bitMin, ttsVoice
       newMessage.text = parsedMessage.trailing;
       newMessage.username = parsedMessage.prefix.split('!')[0];
 
+      const allowed = allowList.includes(newMessage.username.toLowerCase());
+
+      const denied = denyList.includes(newMessage.username.toLowerCase());
+
+      if (allowed) {
+        console.log('allow-listed chatter!');
+        newMessage.readTTS = true;
+      }
+
       // Check for bits cheered
       if ((parsedMessage.tags['bits'] && parseInt(parsedMessage.tags['bits']) >= bitMin) || bitMin < 1) {
         console.log('min cheer req met:', parsedMessage.tags['bits']);
         newMessage.readTTS = true;
+      }
+
+      if (denied) {
+        console.log("deny-listed chatter!");
+        newMessage.readTTS = false;
       }
 
       addMessage(newMessage);

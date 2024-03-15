@@ -90,16 +90,28 @@ const TTSConfigurator = ({ onSave }) => {
             />
           </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={2}>
             <FormControlLabel control={<Checkbox name="newSubs" />} label="New Subscribers" />
           </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={2}>
             <FormControlLabel control={<Checkbox name="resubs" />} label="Resubscribers" />
           </Grid>
 
-          <Grid item xs={4}>
-            <FormControlLabel control={<Checkbox name="followers" />} label="Followers" />
+          <Grid item xs={2}>
+            <FormControlLabel control={<Checkbox name="giftSubs" />} label="Gift Subs" />
+          </Grid>
+
+          <Grid item xs={2}>
+            <FormControlLabel control={<Checkbox name="vips" />} label="VIPs" />
+          </Grid>
+
+          <Grid item xs={2}>
+            <FormControlLabel control={<Checkbox name="mods" />} label="Mods" />
+          </Grid>
+
+          <Grid item xs={2}>
+            <FormControlLabel control={<Checkbox name="followers" />} label="New Followers" />
           </Grid>
 
           <Grid item xs={4} marginTop >
@@ -119,19 +131,18 @@ const TTSConfigurator = ({ onSave }) => {
             </Stack>
           </Grid>
 
-          
-          <Grid item xs={4} marginTop >
+          <Grid item xs={2} marginTop >
             <Button
-              type="submit"
+              type="button"
               variant="contained"
-              color="success"
+              color="error"
               size="large"
             >
-              Save
+              Stop
             </Button>
           </Grid>
 
-          <Grid item xs={4} marginTop >
+          <Grid item xs={2} marginTop >
             <Button 
               type="button"
               variant="contained"
@@ -139,7 +150,30 @@ const TTSConfigurator = ({ onSave }) => {
               size="large"
               onClick={()=> setDialogOpen(true)}
             >
+              Play/Pause
+            </Button>
+          </Grid>
+
+          <Grid item xs={2} marginTop >
+            <Button 
+              type="button"
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={()=> setDialogOpen(true)}
+            >
               Override
+            </Button>
+          </Grid>
+
+          <Grid item xs={2} marginTop >
+            <Button
+              type="submit"
+              variant="contained"
+              color="success"
+              size="large"
+            >
+              Save
             </Button>
           </Grid>
         </Grid>

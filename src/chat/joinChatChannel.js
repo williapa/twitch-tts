@@ -1,9 +1,21 @@
-import { newFollower, newSubscriber, resubscription } from "./channel";
+import { giftSubscriber, newFollower, newSubscriber, resubscription } from "./channel";
 import parseIrcMessage from "../util/parseIrcMessage";
 
 let ws = null;
 
-const joinChatChannel = ({ channel, newSubs, resubs, followers, bitMin, ttsVoice, volume, overrideList }, addMessage) => {
+const joinChatChannel = ({ 
+  channel,
+  newSubs,
+  resubs,
+  followers,
+  bitMin,
+  ttsVoice,
+  volume,
+  overrideList,
+  vips,
+  mods,
+  giftSubs,
+}, addMessage) => {
 
   if (!channel) return;
   
@@ -28,9 +40,7 @@ const joinChatChannel = ({ channel, newSubs, resubs, followers, bitMin, ttsVoice
 
   ws.onmessage = (event) => {
     const message = event.data;
-
-    console.log("received message: ");
-
+    // todo: confirm connect to channel chat or display error
     console.log(message);
 
     // Basic parsing of IRC message
@@ -41,7 +51,8 @@ const joinChatChannel = ({ channel, newSubs, resubs, followers, bitMin, ttsVoice
       volume,
       text: '',
       username: 'twitch',
-      readTTS: false
+      readTTS: false,
+      status: false
     };
 
     // Filter for PRIVMSG which indicates a chat message
@@ -50,12 +61,29 @@ const joinChatChannel = ({ channel, newSubs, resubs, followers, bitMin, ttsVoice
       newMessage.username = parsedMessage.prefix.split('!')[0];
 
       const allowed = allowList.includes(newMessage.username.toLowerCase());
-
       const denied = denyList.includes(newMessage.username.toLowerCase());
 
       if (allowed) {
         console.log('allow-listed chatter!');
         newMessage.readTTS = true;
+      }
+
+      // vip 
+      if (parsedMessage.tags['vip'] === '1') {
+        console.log('VIP message!');
+        newMessage.status = 'vip';
+        if (vips) {
+          newMessage.readTTS = true;
+        }
+      }
+
+      // mod 
+      if (parsedMessage.tags['user-type'] === 'mod') { 
+        console.log('Mod message!');
+        newMessage.status = 'mod';
+        if (mods) {
+          newMessage.readTTS = true;
+        }
       }
 
       // Check for bits cheered
@@ -68,9 +96,6 @@ const joinChatChannel = ({ channel, newSubs, resubs, followers, bitMin, ttsVoice
         console.log("deny-listed chatter!");
         newMessage.readTTS = false;
       }
-
-      addMessage(newMessage);
-
     } else if (newFollower(parsedMessage)) {
       console.log("new follower!");
       newMessage.text = `Thanks for following, ${parsedMessage.tags['display-name']}!`;
@@ -78,34 +103,39 @@ const joinChatChannel = ({ channel, newSubs, resubs, followers, bitMin, ttsVoice
       if (followers) {
         newMessage.readTTS = true;
       }
-
-      addMessage(newMessage);
-
     } else if (resubscription(parsedMessage)) {
       console.log("resub!");
       
-      newMessage.text =`${parsedMessage.tags['display-name']} just resubbed! They've subbed for ${parsedMessage.tags['msg-param-cumulative-months']} months!`;
+      newMessage.text =`${parsedMessage.tags['display-name']} just resubscribed! They've subscribed for ${parsedMessage.tags['msg-param-cumulative-months']} months! ${parsedMessage.trailing}`;
 
       if (resubs) {
         newMessage.readTTS = true;
       }
-
-      addMessage(newMessage);
-
     } else if (newSubscriber(parsedMessage)) {
-      console.log("new subscriber!");
+      console.log('new subscriber!');
 
       newMessage.text = `Thanks for subscribing ${parsedMessage.tags['display-name']}!`;
 
       if (newSubs) {
         newMessage.readTTS = true;
       }
+    } else if (giftSubscriber(parsedMessage)) {
+      console.log('gifted subs!');
 
-      addMessage(newMessage);
+      newMessage.text = parsedMessage.tags['system-msg'].replace('\s', ' ');
 
+      if (giftSubs) {
+        newMessage.readTTS = true;
+      }
+    } else {
+      return;
     }
-
+    // for any case other than else add Message
+    addMessage(newMessage);
   };
+
+  return ws;
+
 };
 
 export default joinChatChannel;

@@ -4,7 +4,6 @@ import {
   Typography,
   TextField,
   FormControlLabel,
-  Checkbox,
   Select,
   Slider,
   MenuItem,
@@ -12,25 +11,106 @@ import {
   FormControl,
   Grid,
   Box,
-  Button
+  Button,
+  ButtonGroup,
 } from '@mui/material';
-import { VolumeUp, VolumeDown } from "@mui/icons-material";
+import { 
+  VolumeUp,
+  VolumeDown,
+  Stop,
+  PlayArrow,
+  Pause,
+  Save,
+  SkipNext,
+  Settings,
+  ManageAccounts
+} from "@mui/icons-material";
 import OverrideListModal from './OverrideListModal';
 
-const TTSConfigurator = ({ onSave }) => {
+const globalProfileName = 'ttsSettings';
+
+const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
   const formRef = useRef(null);
 
   const [voices, setVoices] = useState([]);
-
+  const [channel, setChannel] = useState('');
+  const [currentChannel, setCurrentChannel] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-
   const [overrideList, setOverrideList] = useState([]);
+  const [playing, setPlaying] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  const getFormValues = () => {
+    const formData = new FormData(formRef.current);
+    const formValues = {};
+    for (let [key, value] of formData.entries()) {
+      formValues[key] = value;
+    }
+    formValues.overrideList = overrideList;
+    return formValues;
+  }
+  
+  const setFormValues = (savedFormValues) => {
+    // Assuming formRef is a ref to your form element
+    const form = formRef.current;
+    console.log(savedFormValues);
+    // Set values for standard input fields
+    Object.entries(savedFormValues).forEach(([key, value]) => {
+      if (key !== 'overrideList') { // Skip overrideList or any other non-standard fields
+        const element = form.elements[key];
+        if (element) {
+          if (element.type === 'checkbox') {
+            element.checked = value;
+          } else {
+            element.value = value;
+          }
+          if (key === 'channel') {
+            setChannel(value);
+          }
+        }
+      }
+    });
+    console.log(savedFormValues.overrideList);
+    // Handle setting the value of 'overrideList' or other non-standard fields
+    setOverrideList([...savedFormValues.overrideList]);
+  }
 
   const handleClose = (newList) => {
     setOverrideList([...newList])
     setDialogOpen(false);
+  };
+
+  const load = (name = globalProfileName) => {
+    // todo - store by name (requires more ui)
+    const data = window.localStorage.getItem(name);
+    if (!data) {
+      window.alert('no configuration saved.');
+      return;
+    }
+    setFormValues(JSON.parse(data));
+    window.alert(`Your settings from date have been loaded!`);
+  }
+  // todo: save profile by name (requires more ui)
+  const save = (name = globalProfileName) => {
+    const formValues = getFormValues();
+    window.localStorage.setItem(name, JSON.stringify(formValues));
+    window.alert('settings saved to this device, which you can load in the future.')
   }
 
+  const pauseSpeech = () => {
+    setPlaying(false);
+    window.speechSynthesis.pause();
+    addMessage({ text: 'TTS paused.', username: 'client', readTTS: false });
+  };
+
+  const skip = () => window.speechSynthesis.cancel();
+
+  const stop = () => {
+    setPlaying(false);
+    setReady(false);
+    onStop();
+    addMessage({ text: 'TTS stopped.', username: 'client', readTTS: false });
+  }
 
   useEffect(() => {
     setVoices(speechSynthesis.getVoices());
@@ -39,16 +119,27 @@ const TTSConfigurator = ({ onSave }) => {
     };
   }, []);
 
-  const handleSubmit = (event) => {
-    event.preventDefault(); // Prevent default form submission behavior
-    const formData = new FormData(formRef.current);
-    const formValues = {};
-    for (let [key, value] of formData.entries()) {
-      formValues[key] = value;
+  const handleSubmit = () => {
+    const formValues = getFormValues();
+
+    if (ready) {
+      addMessage({ text: 'TTS resumed.', username: 'client', readTTS: false });
+      window.speechSynthesis.resume();
+    } else {
+      addMessage({ text: 'TTS is now playing!', username: 'client', readTTS: false });
+      const startPlaying = onPlay(formValues); // Pass form values up for processing
+      setCurrentChannel(formValues.channel);
+      setReady(startPlaying);
     }
-    formValues.overrideList = overrideList;
-    onSave(formValues); // Pass form values up for processing
+    // ready or not it's playing now 
+    setPlaying(true);
   };
+
+  useEffect(() => {
+    if (currentChannel.length) {
+      clear(currentChannel);
+    }
+  }, [currentChannel]);
 
   return (
     <Box sx={{ m: 4 }}>
@@ -61,7 +152,13 @@ const TTSConfigurator = ({ onSave }) => {
           <Grid item xs={4}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Typography variant="body1">twitch.tv/</Typography>
-              <TextField name="channel" label="Channel Name" variant="outlined" fullWidth />
+              <TextField value={channel}
+                onChange={(evt) => setChannel(evt.target.value)}
+                name="channel"
+                label="Channel Name"
+                variant="outlined"
+                fullWidth
+              />
             </div>
           </Grid>
 
@@ -91,30 +188,30 @@ const TTSConfigurator = ({ onSave }) => {
           </Grid>
 
           <Grid item xs={2}>
-            <FormControlLabel control={<Checkbox name="newSubs" />} label="New Subscribers" />
+            <FormControlLabel control={<input type="checkbox" name="newSubs" />} label="New subs" />
           </Grid>
 
           <Grid item xs={2}>
-            <FormControlLabel control={<Checkbox name="resubs" />} label="Resubscribers" />
+            <FormControlLabel control={<input type="checkbox" name="resubs" />} label="Resubs" />
           </Grid>
 
           <Grid item xs={2}>
-            <FormControlLabel control={<Checkbox name="giftSubs" />} label="Gift Subs" />
+            <FormControlLabel control={<input type="checkbox" name="giftSubs" />} label="Gift subs" />
           </Grid>
 
           <Grid item xs={2}>
-            <FormControlLabel control={<Checkbox name="vips" />} label="VIPs" />
+            <FormControlLabel control={<input type="checkbox" name="vips" />} label="VIPs" />
           </Grid>
 
           <Grid item xs={2}>
-            <FormControlLabel control={<Checkbox name="mods" />} label="Mods" />
+            <FormControlLabel control={<input type="checkbox" name="mods" />} label="Mods" />
           </Grid>
 
           <Grid item xs={2}>
-            <FormControlLabel control={<Checkbox name="followers" />} label="New Followers" />
+            <FormControlLabel control={<input type="checkbox" name="followers" />} label="Follows" />
           </Grid>
 
-          <Grid item xs={4} marginTop >
+          <Grid item xs={2} marginTop >
             <Stack spacing={2} direction="row" sx={{ mb: 1, mt: 1 }} alignItems="center">
               <VolumeDown />
               <Slider step={1}
@@ -131,53 +228,89 @@ const TTSConfigurator = ({ onSave }) => {
             </Stack>
           </Grid>
 
-          <Grid item xs={2} marginTop >
-            <Button
-              type="button"
-              variant="contained"
-              color="error"
-              size="large"
-            >
-              Stop
-            </Button>
+          <Grid item xs={4} marginTop >
+            <ButtonGroup>
+              <Button
+                endIcon={<Stop />}
+                type="button"
+                variant="contained"
+                color="warning"
+                size="large"
+                onClick={stop}
+                disabled={!ready}
+              >
+                Stop
+              </Button>
+
+              <Button 
+                id="playPause"
+                endIcon={playing ? <Pause /> : <PlayArrow />}
+                type="button"
+                variant="contained"
+                color="secondary"
+                size="large"
+                onClick={playing ? pauseSpeech : handleSubmit}
+              >
+                {playing? 'Pause' : 'Play'}
+              </Button>
+              
+              <Button
+                disabled={!ready}
+                endIcon={<SkipNext />}
+                type="button"
+                variant="contained"
+                color="info"
+                size="large"
+                onClick={skip}
+              >
+                skip
+              </Button>
+            </ButtonGroup>
           </Grid>
 
           <Grid item xs={2} marginTop >
-            <Button 
-              type="button"
-              variant="contained"
-              color="secondary"
-              size="large"
-              onClick={()=> setDialogOpen(true)}
-            >
-              Play/Pause
-            </Button>
+            <ButtonGroup>
+              <Button 
+                endIcon={<ManageAccounts />}
+                type="button"
+                variant="contained"
+                color="error"
+                size="large"
+                onClick={()=> setDialogOpen(true)}
+              >
+                Users
+              </Button>
+            </ButtonGroup>
           </Grid>
 
-          <Grid item xs={2} marginTop >
-            <Button 
-              type="button"
-              variant="contained"
-              color="primary"
-              size="large"
-              onClick={()=> setDialogOpen(true)}
-            >
-              Override
-            </Button>
+          <Grid item xs={4} marginTop >
+            <ButtonGroup>
+              <Button
+                onClick={load}
+                endIcon={<Settings />}
+                type="button"
+                variant="contained"
+                color="primary"
+                size="large"
+              >
+                Load
+              </Button>
+
+              <Button
+                onClick={save}
+                endIcon={<Save />}
+                type="button"
+                variant="contained"
+                color="success"
+                size="large"
+              >
+                Save
+              </Button>
+            </ButtonGroup>
           </Grid>
 
-          <Grid item xs={2} marginTop >
-            <Button
-              type="submit"
-              variant="contained"
-              color="success"
-              size="large"
-            >
-              Save
-            </Button>
-          </Grid>
         </Grid>
-        <OverrideListModal open={dialogOpen} handleClose={handleClose}/>
+        <OverrideListModal initialList={overrideList} open={dialogOpen} handleClose={handleClose}/>
       </form>
     </Box>
   );

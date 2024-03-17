@@ -9,6 +9,7 @@ import synthesizeSpeech from './util/synthesizeSpeech.js';
 function App() {
 
   const [chatMessages, setChatMessages] = useState([]);
+  const [socket, setSocket] = useState(null);
 
   const addMessage = (newMessage) => {
     if (newMessage.readTTS) {
@@ -17,14 +18,32 @@ function App() {
     setChatMessages((currentMessages) => [...currentMessages, newMessage]);
   }
 
-  const onSave = (formData) => {
+  const onPlay = (formData) => {
     console.log(formData);
-    joinChatChannel(formData, addMessage);
+    const ws = joinChatChannel(formData, addMessage);
+    setSocket(ws);
+    return true;
+  };
+
+  const onStop = () => {
+    if (socket) {
+      socket.close();
+      setSocket(null);
+    }
+    addMessage({ text: 'TTS stopped.', username: 'client', readTTS: false });
+  };
+
+  const clear = (channelName) => {
+    setChatMessages([{ username: 'client', text: `Joining new channel - ${channelName}`, readTTS: false }]);
   };
 
   return (
     <div className="App">
-      <TTSConfigurator onSave={onSave}></TTSConfigurator>
+      <TTSConfigurator clear={clear}
+        onPlay={onPlay}
+        onStop={onStop}
+        addMessage={addMessage}
+      />
       <ChatBox messages={chatMessages}></ChatBox>
     </div>
   );

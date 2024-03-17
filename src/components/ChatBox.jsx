@@ -1,20 +1,42 @@
-import React from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { List, ListItem, ListItemText, ListItemIcon, Typography, Paper } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBookSharp';
 
 const ChatBox = ({ messages }) => {
-  const messagesEndRef = React.useRef(null);
+  const messagesEndRef = useRef(null);
   // scroll to new messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     scrollToBottom()
   }, [messages]);
+
+  const [height, setHeight] = useState(0);
+  const elementRef = useRef(null);
+
+  const updateHeight = () => {
+    if (elementRef.current) {
+      const topPosition = elementRef.current.getBoundingClientRect().top;
+      const windowHeight = window.innerHeight;
+      const availableHeight = windowHeight - topPosition;
+      setHeight(availableHeight > 0 ? availableHeight : 0);
+    }
+  };
+
+  useEffect(() => {
+    updateHeight(); // Set initial height
+    window.addEventListener('resize', updateHeight); // Update height on resize
+
+    return () => {
+      window.removeEventListener('resize', updateHeight); // Cleanup listener
+    };
+  }, []);
+
   // each message object in the 'messages' array has 'username', 'text', and 'readTTS' properties
   return (
-    <Paper style={{ maxHeight: 360, overflow: 'auto', padding: '0px', marginTop: '20px', marginLeft: '30px', marginRight: '30px' }}>
+    <Paper ref={elementRef} style={{ minHeight:`${height - 30}px`, maxHeight: `${height - 30}px`, overflow: 'auto', padding: '0px', marginTop: '20px', marginLeft: '30px', marginRight: '30px' }}>
       <Typography variant='h6' style={{ 
         position: 'sticky', 
         top: 0,
@@ -34,7 +56,7 @@ const ChatBox = ({ messages }) => {
                 <MenuBookIcon style={{ color: '#66bb6a' }} />
               </ListItemIcon>
             )}
-            <ListItemText primary={`${message.username}: ${message.text}`} />
+            <ListItemText primary={`${message.username}${message.status? ` (${message.status})`: ''}: ${message.text}`} />
           </ListItem>
         ))}
         <div ref={messagesEndRef} />

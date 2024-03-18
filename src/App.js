@@ -10,10 +10,11 @@ function App() {
 
   const [chatMessages, setChatMessages] = useState([]);
   const [socket, setSocket] = useState(null);
+  const [playingId, setPlayingId] = useState(null);
 
   const addMessage = (newMessage) => {
     if (newMessage.readTTS) {
-      synthesizeSpeech(newMessage.ttsVoice, newMessage.text, newMessage.volume);
+      synthesizeSpeech(newMessage, setPlayingId);
     }
     setChatMessages((currentMessages) => [...currentMessages, newMessage]);
   }
@@ -30,6 +31,7 @@ function App() {
       socket.close();
       setSocket(null);
     }
+    setPlayingId(null);
   };
 
   const clear = (channelName) => {
@@ -43,7 +45,9 @@ function App() {
         onStop={onStop}
         addMessage={addMessage}
       />
-      <ChatBox messages={chatMessages}></ChatBox>
+      <ChatBox messages={chatMessages}
+        playingId={playingId}
+      />
     </div>
   );
 }

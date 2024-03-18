@@ -8,7 +8,13 @@ Free twitch tts with configurable options for bit donations, subscribers, follow
 - error for invalid channel 
 - fix form sizing on mobile 
 - replace heading with logo 
-- marker on paused message 
-- marker for playing message
-- Channel point redeem configuration 
-- local storage profiles 
+- keep save, remove load and auto-load settings
+- exclude links option
+- exclude emote option 
+- raid tts
+- customize alert text
+- limit chat container history 
+- color client messages
+- new skip control (skip single message)
+- replay button on any green message
+- icon for vip/mod

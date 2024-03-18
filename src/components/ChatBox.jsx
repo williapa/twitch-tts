@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { List, ListItem, ListItemText, ListItemIcon, Typography, Paper } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBookSharp';
 
-const ChatBox = ({ messages }) => {
+const ChatBox = ({ messages, playingId }) => {
   const messagesEndRef = useRef(null);
   // scroll to new messages
   const scrollToBottom = () => {
@@ -50,7 +50,7 @@ const ChatBox = ({ messages }) => {
 
       <List style={{ padding: '0px 0px' }}>
         {messages.map((message, index) => (
-          <ListItem key={index} style={{ backgroundColor: message.readTTS ? '#e8f5e9' : 'transparent' }}>
+          <ListItem key={index} style={{ backgroundColor: message.readTTS ? (message.id === playingId ? '#6cf567': '#e8f5e9') : 'transparent' }}>
             {message.readTTS && (
               <ListItemIcon>
                 <MenuBookIcon style={{ color: '#66bb6a' }} />

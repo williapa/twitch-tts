@@ -46,7 +46,6 @@ const joinChatChannel = ({
     if(message === "PING :tmi.twitch.tv") {
       console.log('Received PING, sending PONG...');
       ws.send('PONG :tmi.twitch.tv'); // Responding with PONG to maintain the connection
-      return;
     }
 
     // Basic parsing of IRC message
@@ -55,6 +54,7 @@ const joinChatChannel = ({
     const newMessage = {
       ttsVoice,
       volume,
+      id: parsedMessage.tags['id'],
       text: '',
       username: 'twitch',
       readTTS: false,

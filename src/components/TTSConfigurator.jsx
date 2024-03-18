@@ -148,7 +148,7 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
 
       <form id="ttsForm" ref={formRef} onSubmit={handleSubmit}>
         <Grid container spacing={2} alignItems="flex-start">
-          <Grid item xs={3}>
+          <Grid item xs={4}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Typography variant="body1">twitch.tv/</Typography>
               <TextField value={channel}
@@ -161,7 +161,7 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
             </div>
           </Grid>
 
-          <Grid item xs={3}>
+          <Grid item xs={4}>
             <FormControl fullWidth>
               <InputLabel id="voice-select-label">TTS Voice</InputLabel>
               <Select defaultValue="Samantha" name="ttsVoice" labelId="voice-select-label" label="TTS Voice">
@@ -174,7 +174,7 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={3}>
+          <Grid item xs={4}>
             <TextField
               type="number"
               label="Bit Min"
@@ -183,18 +183,6 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
               defaultValue={0}
               fullWidth
               InputProps={{ inputProps: { min: 0, max: 99999, step: 1 } }}
-            />
-          </Grid>
-
-          <Grid item xs={3}>
-            <TextField
-              type="number"
-              label="Channel Points"
-              variant="outlined"
-              name="channelPoints"
-              defaultValue={1000}
-              fullWidth
-              InputProps={{ inputProps: { min: 10, max: 250000, step: 10 } }}
             />
           </Grid>
 

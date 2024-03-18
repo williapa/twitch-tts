@@ -1,7 +1,13 @@
-function synthesizeSpeech(voice, message, volume) {
-  let utterance = new SpeechSynthesisUtterance(message);
-  utterance.voice = window.speechSynthesis.getVoices().find(v => v.name === voice);
+function synthesizeSpeech({ ttsVoice, text, volume, id }, setPlayingId) {
+  let utterance = new SpeechSynthesisUtterance(text);
+  utterance.voice = window.speechSynthesis.getVoices().find(v => v.name === ttsVoice);
   utterance.volume = volume / 100;
+  utterance.onstart = () => {
+    setPlayingId(id);
+  };
+  utterance.onend = () => {
+    setPlayingId(null);
+  }
   window.speechSynthesis.speak(utterance);
 }
 

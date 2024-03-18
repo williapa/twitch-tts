@@ -30,7 +30,6 @@ function App() {
       socket.close();
       setSocket(null);
     }
-    addMessage({ text: 'TTS stopped.', username: 'client', readTTS: false });
   };
 
   const clear = (channelName) => {

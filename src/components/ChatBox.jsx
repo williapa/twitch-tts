@@ -36,7 +36,7 @@ const ChatBox = ({ messages }) => {
 
   // each message object in the 'messages' array has 'username', 'text', and 'readTTS' properties
   return (
-    <Paper ref={elementRef} style={{ minHeight:`${height - 30}px`, maxHeight: `${height - 30}px`, overflow: 'auto', padding: '0px', marginTop: '20px', marginLeft: '30px', marginRight: '30px' }}>
+    <Paper ref={elementRef} style={{ minHeight:`${Math.max(120, height - 30)}px`, maxHeight: `${height - 30}px`, overflow: 'auto', padding: '0px', marginTop: '20px', marginLeft: '30px', marginRight: '30px' }}>
       <Typography variant='h6' style={{ 
         position: 'sticky', 
         top: 0,

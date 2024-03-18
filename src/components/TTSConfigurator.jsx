@@ -48,10 +48,9 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
     }
     formValues.overrideList = overrideList;
     return formValues;
-  }
+  };
   
   const setFormValues = (savedFormValues) => {
-    // Assuming formRef is a ref to your form element
     const form = formRef.current;
     console.log(savedFormValues);
     // Set values for standard input fields
@@ -73,11 +72,27 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
     console.log(savedFormValues.overrideList);
     // Handle setting the value of 'overrideList' or other non-standard fields
     setOverrideList([...savedFormValues.overrideList]);
-  }
+  };
 
   const handleClose = (newList) => {
     setOverrideList([...newList])
     setDialogOpen(false);
+  };
+
+  const handleSubmit = () => {
+    const formValues = getFormValues();
+
+    if (ready) {
+      addMessage({ text: 'TTS resumed.', username: 'client', readTTS: false });
+      window.speechSynthesis.resume();
+    } else {
+      addMessage({ text: 'TTS is now playing!', username: 'client', readTTS: false });
+      const startPlaying = onPlay(formValues); 
+      setCurrentChannel(formValues.channel);
+      setReady(startPlaying);
+    }
+    // ready or not it's playing now 
+    setPlaying(true);
   };
 
   const load = (name = globalProfileName) => {
@@ -95,7 +110,7 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
     const formValues = getFormValues();
     window.localStorage.setItem(name, JSON.stringify(formValues));
     window.alert('settings saved to this device, which you can load in the future.')
-  }
+  };
 
   const pauseSpeech = () => {
     setPlaying(false);
@@ -119,22 +134,6 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
     };
   }, []);
 
-  const handleSubmit = () => {
-    const formValues = getFormValues();
-
-    if (ready) {
-      addMessage({ text: 'TTS resumed.', username: 'client', readTTS: false });
-      window.speechSynthesis.resume();
-    } else {
-      addMessage({ text: 'TTS is now playing!', username: 'client', readTTS: false });
-      const startPlaying = onPlay(formValues); // Pass form values up for processing
-      setCurrentChannel(formValues.channel);
-      setReady(startPlaying);
-    }
-    // ready or not it's playing now 
-    setPlaying(true);
-  };
-
   useEffect(() => {
     if (currentChannel.length) {
       clear(currentChannel);
@@ -149,7 +148,7 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
 
       <form id="ttsForm" ref={formRef} onSubmit={handleSubmit}>
         <Grid container spacing={2} alignItems="flex-start">
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Typography variant="body1">twitch.tv/</Typography>
               <TextField value={channel}
@@ -162,7 +161,7 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
             </div>
           </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <FormControl fullWidth>
               <InputLabel id="voice-select-label">TTS Voice</InputLabel>
               <Select defaultValue="Samantha" name="ttsVoice" labelId="voice-select-label" label="TTS Voice">
@@ -175,7 +174,7 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={3}>
             <TextField
               type="number"
               label="Bit Min"
@@ -184,6 +183,18 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
               defaultValue={0}
               fullWidth
               InputProps={{ inputProps: { min: 0, max: 99999, step: 1 } }}
+            />
+          </Grid>
+
+          <Grid item xs={3}>
+            <TextField
+              type="number"
+              label="Channel Points"
+              variant="outlined"
+              name="channelPoints"
+              defaultValue={1000}
+              fullWidth
+              InputProps={{ inputProps: { min: 10, max: 250000, step: 10 } }}
             />
           </Grid>
 
@@ -310,7 +321,10 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
           </Grid>
 
         </Grid>
-        <OverrideListModal initialList={overrideList} open={dialogOpen} handleClose={handleClose}/>
+        <OverrideListModal initialList={overrideList}
+          open={dialogOpen}
+          handleClose={handleClose}
+        />
       </form>
     </Box>
   );

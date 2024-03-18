@@ -43,6 +43,12 @@ const joinChatChannel = ({
     // todo: confirm connect to channel chat or display error
     console.log(message);
 
+    if(message === "PING :tmi.twitch.tv") {
+      console.log('Received PING, sending PONG...');
+      ws.send('PONG :tmi.twitch.tv'); // Responding with PONG to maintain the connection
+      return;
+    }
+
     // Basic parsing of IRC message
     const parsedMessage = parseIrcMessage(message, channel);
 

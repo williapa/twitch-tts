@@ -20,7 +20,7 @@ function App() {
     }
 
     setChatMessages((currentMessages) => {
-      if (currentMessages.length > 5000) currentMessages.shift();
+      if (currentMessages.length > 2000) currentMessages.shift();
       return [...currentMessages, newMessage];
     });
   };
@@ -72,6 +72,7 @@ function App() {
       setSocket(null);
     }
     setPlayingId(null);
+    setPlaying(false);
     window.speechSynthesis.cancel();
   };
 

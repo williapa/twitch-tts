@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { List, ListItem, ListItemText, ListItemIcon, Typography, Paper } from '@mui/material';
-import MenuBookIcon from '@mui/icons-material/MenuBookSharp';
+import { Typography, Paper } from '@mui/material';
+import ChatList from './ChatList';
 
-const ChatBox = ({ messages, playingId }) => {
+const ChatBox = ({ messages, onPause, onReplay, playingId, loading, playing, setPlaying }) => {
   const messagesEndRef = useRef(null);
   // scroll to new messages
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const ChatBox = ({ messages, playingId }) => {
 
   // each message object in the 'messages' array has 'username', 'text', and 'readTTS' properties
   return (
-    <Paper ref={elementRef} style={{ minHeight:`${Math.max(120, height - 30)}px`, maxHeight: `${height - 30}px`, overflow: 'auto', padding: '0px', marginTop: '20px', marginLeft: '30px', marginRight: '30px' }}>
+    <Paper ref={elementRef} style={{ minHeight:`${Math.max(180, height - 30)}px`, maxHeight: `${height - 30}px`, overflow: 'auto', padding: '0px', marginTop: '20px', marginLeft: '30px', marginRight: '30px' }}>
       <Typography variant='h6' style={{ 
         position: 'sticky', 
         top: 0,
@@ -48,19 +48,16 @@ const ChatBox = ({ messages, playingId }) => {
         Chat
       </Typography>
 
-      <List style={{ padding: '0px 0px' }}>
-        {messages.map((message, index) => (
-          <ListItem key={index} style={{ backgroundColor: message.readTTS ? (message.id === playingId ? '#6cf567': '#e8f5e9') : 'transparent' }}>
-            {message.readTTS && (
-              <ListItemIcon>
-                <MenuBookIcon style={{ color: '#66bb6a' }} />
-              </ListItemIcon>
-            )}
-            <ListItemText primary={`${message.username}${message.status? ` (${message.status})`: ''}: ${message.text}`} />
-          </ListItem>
-        ))}
-        <div ref={messagesEndRef} />
-      </List>
+      <ChatList loading={loading} 
+        messages={messages}
+        messagesEndRef={messagesEndRef}
+        onPause={onPause}
+        onReplay={onReplay}
+        playingId={playingId}
+        playing={playing}
+        setPlaying={setPlaying}
+      />
+      
     </Paper>
   );
 };

@@ -14,7 +14,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ClearIcon from '@mui/icons-material/Clear';
 import AddIcon from "@mui/icons-material/Add";
 
-function OverrideListModal({ initialList = [], open, handleClose, clearMessages }) {
+function OverrideListModal({ initialList = [], open, handleClose }) {
   const [overrideList, setOverrideList] = useState(initialList);
   const [error, setError] = useState(null);
   const [chatName, setChatName] = useState('');

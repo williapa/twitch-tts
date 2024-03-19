@@ -14,7 +14,8 @@ import {
   Button,
   ButtonGroup,
 } from '@mui/material';
-import { 
+import {
+  FastForward,
   VolumeUp,
   VolumeDown,
   Stop,
@@ -22,14 +23,21 @@ import {
   Pause,
   Save,
   SkipNext,
-  Settings,
   ManageAccounts
 } from "@mui/icons-material";
 import OverrideListModal from './OverrideListModal';
 
 const globalProfileName = 'ttsSettings';
+const checkBoxes = [
+  ['newSubs', 'New subs'],
+  ['resubs', 'Resubs'],
+  ['giftSubs', 'Gift subs'],
+  ['vips', 'VIPs'],
+  ['mods', 'Mods'],
+  ['followers', 'Follows']
+];
 
-const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
+const TTSConfigurator = ({ addMessage, clear, error, onPlay, onSkipOne, onStop, playing, setPlaying}) => {
   const formRef = useRef(null);
 
   const [voices, setVoices] = useState([]);
@@ -37,7 +45,6 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
   const [currentChannel, setCurrentChannel] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [overrideList, setOverrideList] = useState([]);
-  const [playing, setPlaying] = useState(false);
   const [ready, setReady] = useState(false);
 
   const getFormValues = () => {
@@ -74,8 +81,8 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
     setOverrideList([...savedFormValues.overrideList]);
   };
 
-  const handleClose = (newList) => {
-    setOverrideList([...newList])
+  const handleClose = (newOverrideList) => {
+    setOverrideList(newOverrideList);
     setDialogOpen(false);
   };
 
@@ -84,32 +91,30 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
 
     if (ready) {
       addMessage({ text: 'TTS resumed.', username: 'client', readTTS: false });
-      window.speechSynthesis.resume();
     } else {
       addMessage({ text: 'TTS is now playing!', username: 'client', readTTS: false });
       const startPlaying = onPlay(formValues); 
       setCurrentChannel(formValues.channel);
       setReady(startPlaying);
     }
-    // ready or not it's playing now 
     setPlaying(true);
+    window.speechSynthesis.resume();
   };
 
   const load = (name = globalProfileName) => {
     // todo - store by name (requires more ui)
     const data = window.localStorage.getItem(name);
     if (!data) {
-      window.alert('no configuration saved.');
+      console.log('No settings saved.');
       return;
     }
     setFormValues(JSON.parse(data));
-    window.alert(`Your settings from date have been loaded!`);
   }
   // todo: save profile by name (requires more ui)
-  const save = (name = globalProfileName) => {
+  const save = () => {
     const formValues = getFormValues();
-    window.localStorage.setItem(name, JSON.stringify(formValues));
-    window.alert('settings saved to this device, which you can load in the future.')
+    window.localStorage.setItem(globalProfileName, JSON.stringify(formValues));
+    window.alert('settings saved to this device will automatically load in the future.')
   };
 
   const pauseSpeech = () => {
@@ -118,10 +123,14 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
     addMessage({ text: 'TTS paused.', username: 'client', readTTS: false });
   };
 
-  const skip = () => window.speechSynthesis.cancel();
+  const skipOne = () => {
+    window.speechSynthesis.cancel();
+    // todo: re-enqueue everything after the skipped message 
+  }
+
+  const skipAll = () => window.speechSynthesis.cancel();
 
   const stop = () => {
-    setPlaying(false);
     setReady(false);
     onStop();
     addMessage({ text: 'TTS stopped.', username: 'client', readTTS: false });
@@ -132,6 +141,7 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
     speechSynthesis.onvoiceschanged = () => {
       setVoices(speechSynthesis.getVoices());
     };
+    load();
   }, []);
 
   useEffect(() => {
@@ -148,7 +158,7 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
 
       <form id="ttsForm" ref={formRef} onSubmit={handleSubmit}>
         <Grid container spacing={2} alignItems="flex-start">
-          <Grid item xs={4}>
+          <Grid item xs={12} sm={6} md={4}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Typography variant="body1">twitch.tv/</Typography>
               <TextField value={channel}
@@ -156,12 +166,14 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
                 name="channel"
                 label="Channel Name"
                 variant="outlined"
+                error={!!error}
+                helperText={error}
                 fullWidth
               />
             </div>
           </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={12} sm={6} md={4}>
             <FormControl fullWidth>
               <InputLabel id="voice-select-label">TTS Voice</InputLabel>
               <Select defaultValue="Samantha" name="ttsVoice" labelId="voice-select-label" label="TTS Voice">
@@ -174,7 +186,7 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={4}>
+          <Grid item xs={12} sm={6} md={4}>
             <TextField
               type="number"
               label="Bit Min"
@@ -185,32 +197,40 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
               InputProps={{ inputProps: { min: 0, max: 99999, step: 1 } }}
             />
           </Grid>
+          
+          {checkBoxes.map(([name, label]) => (
+            <Grid key={name} item xs={4} sm={3} md={2} marginTop>
+              <FormControlLabel control={<input type="checkbox" name={name} />} label={label} />
+            </Grid>
+          ))}
 
-          <Grid item xs={2}>
-            <FormControlLabel control={<input type="checkbox" name="newSubs" />} label="New subs" />
+          <Grid item xs={4} sm={4} md={2} marginTop >
+            <Button 
+              endIcon={<ManageAccounts />}
+              type="button"
+              variant="contained"
+              color="warning"
+              size="medium"
+              onClick={()=> setDialogOpen(true)}
+            >
+              Users
+            </Button>
           </Grid>
 
-          <Grid item xs={2}>
-            <FormControlLabel control={<input type="checkbox" name="resubs" />} label="Resubs" />
+          <Grid item xs={4} sm={4} md={2} marginTop >
+            <Button
+              onClick={save}
+              endIcon={<Save />}
+              type="button"
+              variant="contained"
+              color="success"
+              size="medium"
+            >
+              Save
+            </Button>
           </Grid>
 
-          <Grid item xs={2}>
-            <FormControlLabel control={<input type="checkbox" name="giftSubs" />} label="Gift subs" />
-          </Grid>
-
-          <Grid item xs={2}>
-            <FormControlLabel control={<input type="checkbox" name="vips" />} label="VIPs" />
-          </Grid>
-
-          <Grid item xs={2}>
-            <FormControlLabel control={<input type="checkbox" name="mods" />} label="Mods" />
-          </Grid>
-
-          <Grid item xs={2}>
-            <FormControlLabel control={<input type="checkbox" name="followers" />} label="Follows" />
-          </Grid>
-
-          <Grid item xs={2} marginTop >
+          <Grid item xs={4} sm={4} md={2} marginTop >
             <Stack spacing={2} direction="row" sx={{ mb: 1, mt: 1 }} alignItems="center">
               <VolumeDown />
               <Slider step={1}
@@ -227,14 +247,14 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
             </Stack>
           </Grid>
 
-          <Grid item xs={4} marginTop >
+          <Grid item xs={12} sm={12} md={6} marginTop>
             <ButtonGroup>
               <Button
                 endIcon={<Stop />}
                 type="button"
                 variant="contained"
-                color="warning"
-                size="large"
+                color="error"
+                size="medium"
                 onClick={stop}
                 disabled={!ready}
               >
@@ -246,11 +266,23 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
                 endIcon={playing ? <Pause /> : <PlayArrow />}
                 type="button"
                 variant="contained"
-                color="secondary"
-                size="large"
+                color="primary"
+                size="medium"
                 onClick={playing ? pauseSpeech : handleSubmit}
               >
-                {playing? 'Pause' : 'Play'}
+                {playing ? 'Pause' : 'Play'}
+              </Button>
+
+              <Button
+                disabled={!ready}
+                endIcon={<FastForward />}
+                type="button"
+                variant="contained"
+                color="secondary"
+                size="medium"
+                onClick={onSkipOne}
+              >
+                Skip
               </Button>
               
               <Button
@@ -258,52 +290,11 @@ const TTSConfigurator = ({ addMessage, clear, onPlay, onStop }) => {
                 endIcon={<SkipNext />}
                 type="button"
                 variant="contained"
-                color="info"
-                size="large"
-                onClick={skip}
+                color="inherit"
+                size="medium"
+                onClick={skipAll}
               >
-                skip
-              </Button>
-            </ButtonGroup>
-          </Grid>
-
-          <Grid item xs={2} marginTop >
-            <ButtonGroup>
-              <Button 
-                endIcon={<ManageAccounts />}
-                type="button"
-                variant="contained"
-                color="error"
-                size="large"
-                onClick={()=> setDialogOpen(true)}
-              >
-                Users
-              </Button>
-            </ButtonGroup>
-          </Grid>
-
-          <Grid item xs={4} marginTop >
-            <ButtonGroup>
-              <Button
-                onClick={load}
-                endIcon={<Settings />}
-                type="button"
-                variant="contained"
-                color="primary"
-                size="large"
-              >
-                Load
-              </Button>
-
-              <Button
-                onClick={save}
-                endIcon={<Save />}
-                type="button"
-                variant="contained"
-                color="success"
-                size="large"
-              >
-                Save
+                Clear
               </Button>
             </ButtonGroup>
           </Grid>

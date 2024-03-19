@@ -25,7 +25,7 @@ const ChatList = ({ loading, messages, messagesEndRef, onPause, onReplay, playin
                 setPlaying(true);
                 window.speechSynthesis.resume();
               } else {
-                onReplay(message.id)
+                onReplay(message.id);
               }
             }}>
               <PlayArrow color="primary" />

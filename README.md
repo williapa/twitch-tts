@@ -31,3 +31,5 @@ Free twitch tts with configurable options for bit donations, subscribers, follow
 - help text / description / about / form sections / ??? 
 - skip links option
 - button to focus playing message 
+- language filter
+- page title / favicon

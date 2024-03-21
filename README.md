@@ -33,3 +33,5 @@ Free twitch tts with configurable options for bit donations, subscribers, follow
 - button to focus playing message 
 - language filter
 - page title / favicon
+- SEO
+- logo 
